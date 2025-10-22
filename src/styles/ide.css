@@ -1,0 +1,60 @@
+/* Base styles */
+:root {
+  --panel-background: #1a202c; /* gray.900 */
+  --panel-foreground: #ffffff; /* white */
+  --panel-border: #2d3748; /* gray.800 */
+  --panel-hover: #3182ce; /* blue.600 */
+}
+
+/* Dark theme (default) */
+.dark {
+  --panel-background: #1a202c; /* gray.900 */
+  --panel-foreground: #ffffff; /* white */
+  --panel-border: #2d3748; /* gray.800 */
+  --panel-hover: #3182ce; /* blue.600 */
+}
+
+/* Light theme */
+:root:not(.dark) {
+  --panel-background: #f7fafc; /* gray.100 */
+  --panel-foreground: #1a202c; /* gray.900 */
+  --panel-border: #e2e8f0; /* gray.300 */
+  --panel-hover: #4299e1; /* blue.500 */
+}
+
+/* Panel resize handle styles */
+[data-panel-resize-handle-id] {
+  flex: 0 0 4px;
+  background-color: var(--panel-border);
+  transition: background-color 0.2s ease;
+}
+
+[data-panel-resize-handle-id]:hover {
+  background-color: var(--panel-hover);
+}
+
+/* Panel group styles */
+[data-panel-group-id] {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+[data-panel-id] {
+  background-color: var(--panel-background);
+  color: var(--panel-foreground);
+  overflow: hidden;
+}
+
+/* IDE specific styles */
+.ide-root {
+  background-color: var(--panel-background);
+  color: var(--panel-foreground);
+}
+
+/* Add smooth transitions for theme changes */
+.ide-root,
+[data-panel-id],
+[data-panel-resize-handle-id] {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
