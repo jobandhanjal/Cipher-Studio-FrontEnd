@@ -127,12 +127,15 @@ const IDE = () => (
         <NotificationProvider>
           <div className="flex flex-col h-screen">
             <main className="flex-1">
-              <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Signup />} />
-                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                <Route path="/editor/:projectId" element={<ProtectedRoute><IDEInner /></ProtectedRoute>} />
-              </Routes>
+                <Routes>
+                  <Route path="/" element={<Login />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/signup" element={<Signup />} />
+                  <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                  <Route path="/editor/:projectId" element={<ProtectedRoute><IDEInner /></ProtectedRoute>} />
+                  {/* Catch-all route for unknown paths */}
+                  <Route path="*" element={<Login />} />
+                </Routes>
             </main>
           </div>
         </NotificationProvider>
