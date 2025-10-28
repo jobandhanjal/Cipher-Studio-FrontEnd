@@ -3,7 +3,8 @@ import React, { useEffect, useState } from 'react';
 const backdropStyle = {
   position: 'fixed',
   inset: 0,
-  backgroundColor: 'rgba(0,0,0,0.6)',
+  // stronger dark backdrop so UI behind is not visible/blurred
+  backgroundColor: 'rgba(0,0,0,0.88)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
@@ -11,11 +12,12 @@ const backdropStyle = {
 };
 
 const boxStyle = {
-  background: 'rgba(255,255,255,0.06)',
-  color: 'white',
+  // Use theme panel background variables so dialog matches app theme
+  background: 'var(--panel-background)',
+  color: 'var(--panel-foreground)',
   padding: '24px 32px',
   borderRadius: '12px',
-  boxShadow: '0 6px 30px rgba(0,0,0,0.6)',
+  boxShadow: '0 10px 40px rgba(0,0,0,0.6)',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
@@ -63,8 +65,8 @@ const LoadingOverlay = () => {
     <div style={backdropStyle} aria-hidden={false} role="dialog" aria-label="Please wait">
       <div style={boxStyle}>
         <div style={spinnerStyle} aria-hidden="true" />
-        <div style={{ fontWeight: 600, color: '#e6eef8' }}>Please wait...</div>
-        <div style={{ fontSize: '0.85rem', color: 'rgba(230,238,248,0.8)' }}>Request in progress</div>
+        <div style={{ fontWeight: 600 }}>Please wait...</div>
+        <div style={{ fontSize: '0.85rem' }}>Request in progress</div>
       </div>
     </div>
   );

@@ -111,20 +111,28 @@
 .btn-danger-bg { /* keep class for compatibility; visual styling delegated to centralized button system */ }
 
 .modal-overlay {
+  /* Dark, mostly-opaque backdrop for dialogs and API overlays.
+     Avoid blur/backdrop-filter — use a solid dark overlay so underlying
+     content is not visible through a translucent blur. */
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.88); /* darker and more opaque */
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 50;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 .modal-card {
+  /* Dialogs should use the opaque panel background (no translucency)
+     so text remains readable against the dark overlay. */
   background-color: var(--panel-background);
   color: var(--panel-foreground);
   border-radius: 0.5rem;
   padding: 1.5rem;
   width: 24rem;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
 }
 
 .page-container { background: var(--page-background); color: var(--panel-foreground); }
