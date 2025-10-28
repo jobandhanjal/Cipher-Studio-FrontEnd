@@ -127,6 +127,11 @@ svg, .icon, .icon * {
   fill: currentColor !important;
 }
 
+/* Theme toggle icon in navbar should follow theme (dark icon on light theme) */
+:root:not(.dark) .navbar .icon-theme-toggle svg {
+  color: var(--color-text) !important; /* dark color in light theme */
+}
+
 
 a {
   font-weight: 500;

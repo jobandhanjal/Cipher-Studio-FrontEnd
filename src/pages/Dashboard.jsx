@@ -160,17 +160,18 @@ const Dashboard = () => {
                           <span className="text-sm">Open</span>
                         </Button>
 
-                        <IconButton
+                        <Button
+                          variant="danger"
+                          className="btn-logout flex items-center gap-2"
                           title="Delete project"
                           aria-label="Delete project"
-                          className="btn-logout"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleDeleteProject(project._id);
                           }}
                         >
-                          <FiTrash2 size={18} />
-                        </IconButton>
+                          <FiTrash2 size={16} />
+                        </Button>
                       </div>
                     </div>
                   );

@@ -61,18 +61,24 @@ const ProjectList = () => {
                     <IconButton title="Open project" aria-label="Open project" onClick={(e) => { e.stopPropagation(); navigate(`/projects/${project._id}`); }}>
                       <FiFolder size={18} />
                     </IconButton>
-                    <IconButton title="Delete project" aria-label="Delete project" onClick={async (e) => {
-                      e.stopPropagation();
-                      if (!window.confirm('Delete this project?')) return;
-                      try {
-                        await api.delete(`/api/projects/${project._id}`);
-                        setProjects((prev) => Array.isArray(prev) ? prev.filter(p => p._id !== project._id) : []);
-                      } catch (err) {
-                        setError(err.message || 'Delete failed');
-                      }
-                    }}>
-                      <FiTrash2 size={18} />
-                    </IconButton>
+                    <Button
+                      variant="danger"
+                      className="btn-logout flex items-center gap-2"
+                      title="Delete project"
+                      aria-label="Delete project"
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        if (!window.confirm('Delete this project?')) return;
+                        try {
+                          await api.delete(`/api/projects/${project._id}`);
+                          setProjects((prev) => Array.isArray(prev) ? prev.filter(p => p._id !== project._id) : []);
+                        } catch (err) {
+                          setError(err.message || 'Delete failed');
+                        }
+                      }}
+                    >
+                      <FiTrash2 size={16} />
+                    </Button>
                   </div>
                 </div>
               );

@@ -98,6 +98,7 @@ const Navbar = ({ onSave, onRun, onLoad, projectName }) => {
               <FiFolder size={18} />
             </IconButton>
             <IconButton
+              className="icon-theme-toggle"
               onClick={toggleTheme}
               aria-pressed={isDark}
               title={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
@@ -145,6 +146,7 @@ const Navbar = ({ onSave, onRun, onLoad, projectName }) => {
               </>
             )}
             <IconButton
+              className="icon-theme-toggle"
               onClick={toggleTheme}
               aria-pressed={isDark}
               title={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
