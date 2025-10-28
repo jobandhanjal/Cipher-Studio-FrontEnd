@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Text from '../Text';
 import { SandpackPreview } from "@codesandbox/sandpack-react";
 
 const LivePreview = () => {
@@ -17,11 +18,11 @@ const LivePreview = () => {
         justifyContent: "center",
       }}
     >
-      {loading && !error && <p style={{ color: "#fff" }}>Loading preview...</p>}
+      {loading && !error && <Text as="p" variant="body" style={{ color: "#fff" }}>Loading preview...</Text>}
       {error && (
         <div style={{ color: "#ff4d4f", textAlign: "center" }}>
-          <p>Something went wrong with the live preview.</p>
-          <p>{error.message || "Unknown error"}</p>
+          <Text as="p" variant="body">Something went wrong with the live preview.</Text>
+          <Text as="p" variant="small">{error.message || "Unknown error"}</Text>
         </div>
       )}
       <SandpackPreview

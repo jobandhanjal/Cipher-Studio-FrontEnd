@@ -22,6 +22,17 @@
   --panel-hover: #4299e1; /* blue.500 */
 }
 
+/* Card and page backgrounds that differ from panels */
+.dark {
+  --card-background: #0f1724; /* darker card in dark mode */
+  --page-background: #0b1220;
+}
+
+:root:not(.dark) {
+  --card-background: #ffffff;
+  --page-background: #f7fafc;
+}
+
 /* Panel resize handle styles */
 [data-panel-resize-handle-id] {
   flex: 0 0 4px;
@@ -46,10 +57,25 @@
   overflow: hidden;
 }
 
+/* Ensure each panel is a flex column so children can stretch (editor/preview need 100% height) */
+[data-panel-id] {
+  display: flex;
+  flex-direction: column;
+}
+
 /* IDE specific styles */
 .ide-root {
   background-color: var(--panel-background);
   color: var(--panel-foreground);
+}
+
+/* panels often contain a wrapper with class h-full; make sure it expands */
+.ide-root [data-panel-id] > .h-full,
+.ide-root [data-panel-id] > .flex-1,
+.ide-root .h-full {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Add smooth transitions for theme changes */
@@ -58,3 +84,76 @@
 [data-panel-resize-handle-id] {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
+
+/* Semantic theme classes for consistent styling across components */
+.navbar {
+  background-color: var(--panel-background);
+  color: var(--panel-foreground);
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.navbar .brand {
+  color: var(--panel-foreground);
+}
+
+:root {
+  --accent-color: var(--panel-hover);
+  --accent-text: #ffffff;
+  --muted-text: #9ca3af; /* gray-400 fallback */
+}
+
+.btn-primary { /* variant kept for compatibility — styling centralized in src/index.css .btn and .btn-cta */ }
+
+.btn-icon { /* icon variant styling centralized in src/index.css */ }
+
+.btn-danger { color: #0e1261ff; /* color only; layout handled by centralized .btn */ }
+
+.btn-danger-bg { /* keep class for compatibility; visual styling delegated to centralized button system */ }
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+.modal-card {
+  background-color: var(--panel-background);
+  color: var(--panel-foreground);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  width: 24rem;
+}
+
+.page-container { background: var(--page-background); color: var(--panel-foreground); }
+.card { background: var(--card-background); color: var(--panel-foreground); border: 1px solid var(--panel-border); box-shadow: 0 6px 20px rgba(0,0,0,0.08); border-radius: 1rem; }
+.card-inner { padding: 1.25rem; }
+.card-title { color: var(--accent-color); font-weight: 700; }
+
+.input, .select {
+  width: 100%;
+  background-color: rgba(255,255,255,0.02);
+  color: var(--panel-foreground);
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+}
+
+.file-item {
+  /* padding-left: 0.5rem; */
+  padding-right: 0.5rem;
+  /* padding-top: 0.25rem; */
+  /* padding-bottom: 0.25rem; */
+  border-radius: 0.375rem;
+}
+.file-item:hover { background-color: rgba(255,255,255,0.02); }
+.file-item--active { background-color: rgba(255,255,255,0.04); }
+
+.resize-handle {
+  flex: 0 0 4px;
+  background-color: var(--panel-border);
+}
+.resize-handle:hover { background-color: var(--accent-color); }
+
+.text-muted { color: var(--muted-text); }

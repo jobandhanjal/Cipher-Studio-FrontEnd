@@ -1,9 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { toast } from 'react-toastify';
-import API_BASE_URL, { api, listProjects, saveOrUpdateProject } from '../services/api';
+import { api, listProjects } from '../services/api';
+import { FiEdit2, FiTrash2, FiFolder } from 'react-icons/fi';
+import Icon from '../components/Icon';
+import IconButton from '../components/IconButton';
 import Navbar from '../components/Navbar';
+import SaveProjectModal from '../components/FileExplorer/SaveProjectModal';
+import Text from '../components/Text';
+import Button from '../components/Button';
 
 const Dashboard = () => {
   const [projects, setProjects] = useState([]);
@@ -13,10 +18,16 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        // Use the shared axios instance which attaches the token automatically
         const data = await listProjects();
-        // listProjects returns the raw response data - adapt if backend shape differs
-        setProjects(data.projects || data);
+        // Normalize API result: may return an array or an object { projects: [...] }
+        const normalized = Array.isArray(data)
+          ? data
+          : (Array.isArray(data && data.projects) ? data.projects : []);
+        if (!Array.isArray(normalized)) {
+          // defensive fallback
+          console.warn('Unexpected projects payload:', data);
+        }
+        setProjects(normalized || []);
       } catch (err) {
         toast.error(err.message || 'Failed to load projects');
       }
@@ -25,43 +36,36 @@ const Dashboard = () => {
     fetchProjects();
   }, []);
 
-  const handleCreateProject = async () => {
-    const name = window.prompt('Enter project name:');
-    if (!name) return;
+  const [saveOpen, setSaveOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState(null);
 
-    try {
-      const defaultFiles = {
-        '/App.js': `import React from 'react';
-        
-        export default function App() {
-          return <h1>Hello, React!</h1>;
-        }`,
-        '/index.js': `import React from 'react';
-        import ReactDOM from 'react-dom/client';
-        import App from './App';
-        
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);`,
-        '/styles.css': `body { font-family: Arial, sans-serif; }
-        h1 { color: #333; }`,
-      };
+  const handleCreateProject = () => {
+    // open modal so user can enter project name; modal will stay open on duplicate error
+    setSaveOpen(true);
+  };
 
-      const payload = {
-        name,
-        files: Object.keys(defaultFiles).map((path) => ({
-          path,
-          type: 'file',
-          code: defaultFiles[path],
-          meta: { size: defaultFiles[path].length, modifiedAt: Date.now() },
-        })),
-      };
+  const handleModalClose = (res) => {
+    setSaveOpen(false);
+    if (res && res.id) {
+      navigate(`/editor/${res.id}`);
+    }
+  };
 
-      const res = await saveOrUpdateProject(null, payload);
-      toast.success(`Project ${name} created`);
-      navigate(`/editor/${res.id}`); // Redirect to IDE page with the new project
-    } catch (err) {
-      console.error('Failed to create project', err);
-      toast.error('Failed to create project');
+  const handleEditClose = async (res) => {
+    setEditOpen(false);
+    setEditingProject(null);
+    if (res && res.id) {
+      // refresh projects list to reflect updated metadata
+      try {
+        const data = await listProjects();
+        const normalized = Array.isArray(data)
+          ? data
+          : (Array.isArray(data && data.projects) ? data.projects : []);
+        setProjects(normalized || []);
+      } catch (err) {
+        toast.error('Failed to refresh projects');
+      }
     }
   };
 
@@ -70,64 +74,128 @@ const Dashboard = () => {
 
     try {
       await api.delete(`/api/projects/${projectId}`);
-      setProjects(projects.filter((project) => project._id !== projectId));
+  setProjects((prev) => Array.isArray(prev) ? prev.filter((project) => project._id !== projectId) : []);
       toast.success('Project deleted successfully');
     } catch (error) {
       toast.error('Failed to delete project');
     }
   };
 
-  // Ensure clicking on a listed project navigates to the editor view
   const handleOpenProject = (projectId) => {
     navigate(`/editor/${projectId}`);
   };
 
-  const filteredProjects = projects.filter((project) =>
-    project.name.toLowerCase().includes(searchTerm.toLowerCase())
+  // Guard against non-array projects (defensive): if projects isn't an array, treat as empty list
+  const safeProjects = Array.isArray(projects) ? projects : [];
+  if (!Array.isArray(projects)) console.warn('projects state is not an array in Dashboard:', projects);
+
+  const filteredProjects = safeProjects.filter((project) =>
+    String(project.name || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
-    <div className="page-container bg-gray-50" style={{ width: '100vw', minHeight: '100vh' }}>
+    <div className="page-container w-screen min-h-screen">
       <Navbar />
       <div className="dashboard-content flex items-center justify-center" style={{ minHeight: 'calc(100vh - 56px)' }}>
-        <div style={{ maxWidth: '700px', width: '100%', background: '#fff', borderRadius: '1.5rem', boxShadow: '0 8px 32px rgba(0,0,0,0.12)', padding: '2rem 2.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          {/* Only show projects title, no header */}
-          <h1 className="text-2xl font-extrabold mb-6 text-center" style={{ color: '#2563eb', letterSpacing: '0.5px' }}>My Projects</h1>
-          <div className="w-full flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
-            <button onClick={handleCreateProject} className="create-project-btn" style={{ background: '#2563eb', color: '#fff', borderRadius: '0.75rem', padding: '0.75rem 1.5rem', fontWeight: 600, fontSize: '1rem', letterSpacing: '0.5px' }}>Create New Project</button>
-            <input
-              type="text"
-              placeholder="Search projects..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              style={{ width: '100%', maxWidth: '300px', fontSize: '1rem', color: '#2563eb', }}
-            />
-          </div>
-          <div className="projects-list w-full flex flex-col gap-4">
-            {filteredProjects.length > 0 ? (
-              filteredProjects.map((project) => (
-                <div key={project._id} className="project-card flex flex-col md:flex-row items-center justify-between p-4 bg-white rounded-lg shadow-md border border-gray-300" style={{ minHeight: '70px' }}>
-                  <div className="project-info flex-1 flex flex-col items-start justify-center">
-                    <h3 className="font-bold text-lg mb-1" style={{ color: '#2563eb', letterSpacing: '0.5px', textShadow: '0 1px 2px rgba(0,0,0,0.08)' }}>{project.name}</h3>
-                    {project.description && (
-                      <p className="text-sm text-gray-700" style={{ marginTop: '2px', maxWidth: '90%' }}>{project.description}</p>
-                    )}
-                  </div>
-                  <div className="project-actions flex gap-2 mt-2 md:mt-0">
-                    <button onClick={() => handleOpenProject(project._id)} className="px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 font-semibold shadow-sm" style={{ fontSize: '1rem' }}>Open</button>
-                    <button onClick={() => handleDeleteProject(project._id)} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold shadow-sm" style={{ fontSize: '1rem' }}>Delete</button>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-500 text-center">No projects found. Create a new project to get started!</p>
+        <div className="card" style={{ maxWidth: '700px', width: '100%' }}>
+          <div className="card-inner flex flex-col items-center">
+            <Text as="h1" variant="heading" className="text-2xl font-extrabold mb-6 text-center card-title" style={{ letterSpacing: '0.5px' }}>My Projects</Text>
+
+            <div className="w-full flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
+              <Button onClick={handleCreateProject} variant="cta">Create New Project</Button>
+              <div className="w-full md:w-auto">
+                <input
+                  type="text"
+                  placeholder="Search projects..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="input"
+                />
+              </div>
+            </div>
+
+            <div className="projects-list w-full flex flex-col gap-4">
+              {filteredProjects.length > 0 ? (
+                filteredProjects.map((project) => {
+                  const updated = project.updatedAt || project.createdAt;
+                  const updatedDate = updated ? new Date(updated) : null;
+                  const isToday = updatedDate ? (new Date(updatedDate).toDateString() === new Date().toDateString()) : false;
+                  const lastModified = updatedDate ? (isToday ? updatedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : updatedDate.toLocaleDateString()) : '';
+                  return (
+                    <div key={project._id} className="project-card flex flex-col md:flex-row items-center justify-between p-4 listing-card" style={{ minHeight: '70px' }}>
+                      <div className="project-info flex-1 flex flex-col items-start justify-center min-w-0">
+                        <Text as="h3" variant="label" className="font-bold text-lg mb-1 text-ellipsis truncate" style={{ letterSpacing: '0.5px', textShadow: '0 1px 2px rgba(0,0,0,0.08)' }}>{project.name}</Text>
+                        {project.description && (
+                          <Text as="p" variant="small" className="text-sm text-muted" style={{ marginTop: '2px', maxWidth: '90%' }}>{project.description}</Text>
+                        )}
+                        <Text as="p" variant="small" className="text-xs text-muted mt-2">Last modified: {lastModified}</Text>
+                      </div>
+                      <div className="project-actions flex gap-2 mt-2 md:mt-0 items-center">
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingProject(project);
+                            setEditOpen(true);
+                          }}
+                          variant="cta"
+                          className="flex items-center gap-2"
+                          title="Edit metadata"
+                          aria-label="Edit project"
+                        >
+                          <FiEdit2 size={16} />
+                          <span className="text-sm">Edit</span>
+                        </Button>
+
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenProject(project._id);
+                          }}
+                          variant="cta"
+                          className="flex items-center gap-2"
+                          title="Open project"
+                          aria-label="Open project"
+                        >
+                          <FiFolder size={16} />
+                          <span className="text-sm">Open</span>
+                        </Button>
+
+                        <IconButton
+                          title="Delete project"
+                          aria-label="Delete project"
+                          className="btn-logout"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteProject(project._id);
+                          }}
+                        >
+                          <FiTrash2 size={18} />
+                        </IconButton>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <Text as="p" variant="body" className="text-gray-500 text-center">No projects found. Create a new project to get started!</Text>
+              )}
+            </div>
+            {/* Create project modal — stays open until success or user cancels */}
+            <SaveProjectModal isOpen={saveOpen} onClose={handleModalClose} />
+            {/* Edit project modal (inline) */}
+            {editingProject && (
+              <SaveProjectModal
+                isOpen={editOpen}
+                onClose={handleEditClose}
+                existingId={editingProject._id}
+                initialName={editingProject.name}
+                initialDescription={editingProject.description}
+              />
             )}
           </div>
         </div>
       </div>
     </div>
   );
-}
+};
 
 export default Dashboard;

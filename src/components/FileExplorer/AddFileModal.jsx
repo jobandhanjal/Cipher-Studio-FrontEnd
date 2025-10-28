@@ -1,13 +1,37 @@
 import React, { useState } from 'react';
 import { useProject } from '../../context/ProjectContext';
+import Text from '../Text';
+import Button from '../Button';
 
 const AddFileModal = ({ isOpen, onClose, type = 'file' }) => {
-  const { handleCreateFile } = useProject();
+  const { handleCreateFile, files } = useProject();
   const [error, setError] = useState('');
+  const [parent, setParent] = useState('/');
+
+  // Build available folder options from existing files
+  const folderOptions = (() => {
+    const set = new Set();
+    set.add('/');
+    (files || []).forEach((f) => {
+      const p = f.path.replace(/^\//, '');
+      const parts = p.split('/').filter(Boolean);
+      let acc = '';
+      parts.slice(0, -1).forEach((part) => {
+        acc = acc ? `${acc}/${part}` : part;
+        set.add('/' + acc + '/');
+      });
+      // if this file itself is a folder, include it
+      if (f.type === 'folder') {
+        const folderPath = f.path.startsWith('/') ? f.path : '/' + f.path;
+        set.add(folderPath.endsWith('/') ? folderPath : folderPath + '/');
+      }
+    });
+    return Array.from(set).sort();
+  })();
   
   const handleSubmit = (e) => {
     e.preventDefault();
-    const fileName = e.target.elements.fileName.value;
+  const fileName = e.target.elements.fileName.value;
     
     // Validation
     if (!fileName) {
@@ -21,50 +45,59 @@ const AddFileModal = ({ isOpen, onClose, type = 'file' }) => {
       finalName = `${fileName}.js`;
     }
     
-    // Create file/folder
-    handleCreateFile(finalName, type);
+    // Create file/folder under chosen parent
+    try {
+      handleCreateFile(finalName, type, parent);
+    } catch (err) {
+      setError(err.message || 'Failed to create');
+      return;
+    }
     onClose();
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-      <div className="bg-gray-800 rounded-lg p-6 w-96">
-        <h2 className="text-xl font-semibold mb-4">
+    // z-50 ensures the modal overlays other panel/content stacking contexts
+    <div className="modal-overlay">
+      <div className="modal-card">
+        <Text as="h2" variant="heading" className="text-xl font-semibold mb-4">
           Create New {type.charAt(0).toUpperCase() + type.slice(1)}
-        </h2>
+        </Text>
         
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label htmlFor="fileName" className="block text-sm font-medium mb-2">
+            <Text as="label" variant="label" htmlFor="fileName" className="block text-sm font-medium mb-2">
               {type.charAt(0).toUpperCase() + type.slice(1)} Name
-            </label>
+            </Text>
             <input
               type="text"
               id="fileName"
               name="fileName"
-              className="w-full bg-gray-700 rounded px-3 py-2"
+              className="input"
               placeholder={type === 'file' ? 'Example.js' : 'ExampleFolder'}
               autoFocus
             />
-            {error && <p className="text-red-400 text-sm mt-1">{error}</p>}
+            {error && <Text as="p" variant="small" className="text-red-400 text-sm mt-1">{error}</Text>}
+          </div>
+          <div className="mb-4">
+            <Text as="label" variant="label" htmlFor="parent" className="block text-sm font-medium mb-2">Parent Folder</Text>
+            <select
+              id="parent"
+              name="parent"
+              value={parent}
+              onChange={(e) => setParent(e.target.value)}
+              className="select"
+            >
+              {folderOptions.map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
           </div>
           
           <div className="flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded bg-gray-700 hover:bg-gray-600"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-500"
-            >
-              Create
-            </button>
+            <Button type="button" onClick={onClose} variant="primary"><Text as="span" variant="label">Cancel</Text></Button>
+            <Button type="submit" variant="primary"><Text as="span" variant="label" allowColorOverride>Create</Text></Button>
           </div>
         </form>
       </div>

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useProject } from '../../context/ProjectContext';
+import Text from '../Text';
+import Button from '../Button';
 
 // File type icons
 const icons = {
@@ -17,71 +19,87 @@ const getIcon = (file) => {
 };
 
 const FileItem = ({ file, isActive }) => {
-  const { setActiveFile, handleDeleteFile, handleRenameFile } = useProject();
+  const { handleDeleteFile, handleRenameFile } = useProject();
   const [isRenaming, setIsRenaming] = useState(false);
   const [showActions, setShowActions] = useState(false);
+
+  const { setActiveFile } = useProject();
 
   const handleRenameSubmit = (e) => {
     e.preventDefault();
     const newName = e.target.elements.newName.value;
-    if (newName && newName !== file.path) {
+    // Use basename only when renaming
+    const oldBase = file.path.replace(/\/$/, '').split('/').pop();
+    if (newName && newName !== oldBase) {
       handleRenameFile(file.path, newName);
     }
     setIsRenaming(false);
   };
 
   return (
-    <li 
-      className={`flex items-center group px-2 py-1 rounded cursor-pointer ${
-        isActive ? 'bg-gray-700/50' : 'hover:bg-gray-700/30'
-      }`}
-      onClick={() => file.type === 'file' && setActiveFile(file.path)}
+    // Use a div here (not <li>) because FileItem is rendered inside a wrapping <li> in the tree.
+    <div
+      role="listitem"
+      className={`flex items-center group file-item ${isActive ? 'file-item--active' : ''}`}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
+      onClick={() => setActiveFile(file.path)}
     >
-      <span className="mr-2">{getIcon(file)}</span>
-      
+  <span className="mr-2">{getIcon(file)}</span>
+
       {isRenaming ? (
         <form onSubmit={handleRenameSubmit} className="flex-1">
           <input
             name="newName"
-            defaultValue={file.path.replace(/^\//, '').replace(/\/$/, '')}
-            className="bg-gray-800 px-1 py-0.5 rounded w-full"
+            defaultValue={file.path.replace(/\/$/, '').split('/').pop()}
+            className="input"
             autoFocus
             onBlur={() => setIsRenaming(false)}
           />
         </form>
       ) : (
-        <div className="flex justify-between items-center flex-1">
-          <span className="truncate">
-            {file.path.replace(/^\//, '').replace(/\/$/, '')}
-          </span>
-          
-          {showActions && (
-            <div className="flex gap-2 text-gray-400">
-              <button
-                className="hover:text-white"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsRenaming(true);
-                }}
-              >
-                ✏️
-              </button>
-              <button
-                className="hover:text-white"
-                onClick={(e) => {
-                  e.stopPropagation();
+        // left: filename (flex-1) | right: action buttons (fixed width, right aligned)
+        <div className="flex items-center w-full">
+            <div className="flex-1 text-left">
+            <Text as="span" className="truncate block" variant="body">
+              {file.path.replace(/^\//, '').replace(/\/$/, '')}
+            </Text>
+          </div>
+
+          {/* Action buttons hidden by default; become visible on hover */}
+          <div className="flex items-center gap-2 ml-4 w-20 justify-end opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto">
+            <Button
+              className=""
+              variant="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsRenaming(true);
+              }}
+              aria-label="Rename file"
+              title="Rename"
+            >
+              <span style={{ fontSize: '12px', lineHeight: 1 }}>✏️</span>
+            </Button>
+            <Button
+              className=""
+              variant="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                const base = file.path.replace(/\/$/, '').split('/').pop();
+                const confirmMsg = `Delete '${base}'? This action cannot be undone. Are you sure you want to permanently delete this file?`;
+                if (window.confirm(confirmMsg)) {
                   handleDeleteFile(file.path);
-                }}
-              >
-                🗑️
-              </button>
-            </div>
-          )}
+                }
+              }}
+              aria-label="Delete file"
+              title="Delete"
+            >
+              <span style={{ fontSize: '12px', lineHeight: 1 }}>🗑️</span>
+            </Button>
+          </div>
         </div>
       )}
-    </li>
+    </div>
   );
 };
 

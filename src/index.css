@@ -4,20 +4,21 @@ button, [tabindex]:not([tabindex="-1"]), input, textarea, select, a {
   transition: box-shadow 0.2s;
 }
 button:focus, [tabindex]:not([tabindex="-1"]):focus, input:focus, textarea:focus, select:focus, a:focus {
-  box-shadow: 0 0 0 2px #6366f1;
+  /* use theme-aware focus ring (pink by default, indigo in dark) */
+  box-shadow: 0 0 0 2px var(--color-focus, rgba(99,102,241,0.22));
   outline: none;
 }
 
 /* Font size and contrast for accessibility */
 body, .ide-root {
   font-size: 1rem;
-  color: #f4f4f5;
-  background: #18181b;
+  color: var(--color-text, #111827);
+  background: var(--color-background, #ffffff);
 }
 
 /* Example: accessible heading */
 h1, h2, h3, h4, h5, h6 {
-  color: #f4f4f5;
+  color: var(--color-text);
   font-family: Inter, system-ui, sans-serif;
 }
 /* --- CipherStudio IDE Layout Responsive Styles --- */
@@ -59,14 +60,73 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 400;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+
+  /* Design tokens (60 / 30 / 10 rule) - light theme defaults */
+  --color-background: #ffffff;    /* 60% background */
+  --color-surface: #f3f4f6;       /* 30% surfaces */
+  --color-accent: #ec4899;        /* 10% accent (pink) */
+  --color-primary: #4f46e5;       /* indigo used for CTA */
+  --color-text: #111827;          /* default text color (dark for light theme) */
+  /* Input/editor text should invert with theme to remain readable on transparent backgrounds */
+  --color-input-text: #111827; /* default for light theme: dark input text */
+  --color-input-placeholder: rgba(0,0,0,0.6);
+  --color-muted: #6b7280;
+  --color-border: #e5e7eb;
+  --color-focus: rgba(236,72,153,0.22);
+
+  /* Button gradient tokens (purple -> pink) */
+  --btn-gradient-start: #8b5cf6; /* purple-500 */
+  --btn-gradient-end: #ec4899;   /* pink-500 */
+  --btn-gradient-angle: 135deg;
+  --btn-border-radius: 9999px; /* pill */
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Dark theme overrides (activated when <html> has .dark) */
+.dark, html.dark {
+  --color-background: #0F172A; /* dark base */
+  --color-surface: #1E293B;    /* dark surfaces */
+  --color-accent: #ec4899;     /* accent */
+  --color-primary: #6366f1;    /* indigo for CTA in dark */
+  --color-text: #ffffff;       /* text color for dark theme */
+  --color-input-text: #ffffff; /* dark theme: light input/editor text */
+  --color-input-placeholder: rgba(255,255,255,0.7);
+  --color-muted: #94a3b8;
+  --color-border: #334155;
+  --color-focus: rgba(99,102,241,0.22);
+  /* Slightly tweaked gradient for dark to keep vibrancy */
+  --btn-gradient-start: #7c3aed;
+  --btn-gradient-end: #f472b6;
+}
+
+/* Form controls and editors: allow input/editor text to follow --color-input-text
+   so that input text is dark in light theme and light in dark theme (readable
+   even when control background is transparent). Buttons keep their label color
+   (usually white) via their own rules. */
+input, textarea, select, .input, .form-input, .code-textarea {
+  color: var(--color-input-text) !important;
+}
+button { color: #ffffff !important; }
+input::placeholder, textarea::placeholder {
+  color: var(--color-input-placeholder) !important;
+}
+
+/* SVG icons: default to follow text color so icons outside buttons invert with theme */
+svg, .icon, .icon * {
+  color: var(--color-text);
+  fill: currentColor;
+}
+
+/* Icons used inside standard buttons should remain white to match button labels */
+.btn svg {
+  color: #ffffff !important;
+  fill: currentColor !important;
+}
+
 
 a {
   font-weight: 500;
@@ -90,23 +150,113 @@ h1 {
   line-height: 1.1;
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+/* Button primitives: centralized Tailwind-based component
+   - Uses Tailwind utilities via @apply for spacing, typography and layout
+   - Uses CSS variables for color/gradient tokens so themes can override values
+   - Keeps variant classes (.btn-secondary, .btn-icon, .btn-danger, .btn-cta)
+     but avoids ad-hoc button selectors to prevent accidental overrides.
+*/
+@layer components {
+  .btn {
+    /* layout & spacing */
+    @apply inline-flex items-center justify-center gap-2 select-none;
+    @apply px-7 py-3; /* 1.75rem x 0.75rem */
+    @apply rounded-full; /* pill */
+
+    /* typography */
+    @apply text-base font-semibold; /* 1rem, 600 */
+    /* line-height: 1.2; */
+
+    /* accessibility */
+    max-height: 35px; /* mobile recommended touch target */
+    max-width: 100%;
+
+    /* visuals (use design tokens for gradients) */
+    color: #fff;
+    border: none;
+    background-image: linear-gradient(var(--btn-gradient-angle, 45deg), var(--btn-gradient-start), var(--btn-gradient-end));
+
+    /* interactions */
+    @apply transition-transform duration-300 ease-in-out;
+    transform: translateZ(0);
+  }
+
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px rgba(164,105,218,0.4);
+  }
+
+  .btn:active { transform: scale(0.97); }
+  .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+  /* Secondary (outline) */
+  .btn-secondary {
+    @apply bg-transparent;
+    color: var(--color-primary);
+    border: 1px solid var(--color-border);
+  }
+
+  .btn-secondary:hover { background: color-mix(in srgb, var(--color-surface) 90%, var(--color-background)); }
+
+  /* Icon-style button (compact/circular) */
+  .btn-icon {
+    /* icon-only buttons: remove background gradients and minimize padding so only the icon is visible */
+    @apply inline-grid place-items-center;
+    padding: 0.125rem; /* small hit target but minimal visual footprint */
+    border-radius: 0.375rem;
+    background-image: none !important;
+    background-color: transparent !important;
+    color: var(--color-text);
+    min-width: 0;
+    width: auto;
+    height: auto;
+  }
+
+  /* Danger / accent */
+  .btn-danger {
+    @apply bg-transparent;
+    color: var(--color-accent);
+    /* border: 1px solid transparent; */
+  }
+
+  .btn-danger:hover { background: color-mix(in srgb, var(--color-accent) 8%, transparent 92%); }
+
+  /* CTA variant (accent) retained for certain flows */
+  .btn-cta {
+    background-image: linear-gradient(var(--btn-gradient-angle, 45deg), var(--btn-gradient-start), var(--btn-gradient-end));
+    color: #ffffff;
+    /* border: 1px solid transparent; */
+  }
+
+  /* Logout-specific variant: use explicit solid background without affecting other buttons
+     Apply as an extra class `btn-logout` on the logout Button only. */
+  .btn-logout {
+    background-image: none !important;
+    background-color: var(--btn-logout-bg, #851d1dff) !important;
+    color: #ffffff !important;
+    /* border: 1px solid transparent; */
+  }
+
+  .btn-logout:hover { filter: brightness(0.95); }
+
+  /* Toggle style (text links/buttons) */
+  .btn-toggle { @apply bg-transparent; color: var(--color-muted); border: none; padding: 0.25rem 0.5rem; }
+  .btn-toggle[aria-pressed="true"] { color: var(--color-primary); }
+
+  /* Focus ring for accessibility */
+  .btn:focus-visible {
+    box-shadow: 0 0 0 4px var(--color-focus, rgba(236,72,153,0.18));
+    outline: none;
+  }
+
+  /* Responsive tweak for very small screens */
+  @media (max-width: 480px) {
+    .btn {
+      @apply text-sm px-6 py-2; /* font-size: 0.9rem; padding ~ 0.65rem 1.5rem */
+      border-radius: 40px;
+      max-height: 35px;
+    }
+  }
 }
 
 @media (prefers-color-scheme: light) {
@@ -117,7 +267,108 @@ button:focus-visible {
   a:hover {
     color: #747bff;
   }
-  button {
-    background-color: #f9f9f9;
-  }
 }
+
+/* --- Theme-aware utility classes (component primitives) --- */
+.navbar {
+  background: var(--color-background);
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+}
+.brand {
+  color: var(--color-primary);
+}
+.project-title {
+  color: var(--color-text);
+}
+/* small helpers (kept for backward compatibility) */
+.brand { color: var(--color-primary); }
+.project-title { color: var(--color-text); }
+
+.form-card { background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); border-radius: 0.5rem; padding: 1rem; }
+
+/* Small editor-specific tokens */
+.editor-header { background: color-mix(in srgb, var(--color-surface) 70%, var(--color-background)); color: var(--color-text); border-bottom: 1px solid var(--color-border); padding: 0.5rem 0.75rem; }
+.code-textarea { background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); border-radius: 0.375rem; padding: 0.5rem; }
+
+/* Form input primitive */
+.form-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-background);
+  color: var(--color-text);
+  transition: box-shadow 120ms ease, border-color 120ms ease, background-color 120ms ease;
+}
+.form-input::placeholder { color: var(--color-muted); }
+.form-input:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* back-compat alias: many components use .input class */
+.input { width: 100%; padding: 0.5rem 0.75rem; border-radius: 0.375rem; border: 1px solid var(--color-border); background: var(--color-background); color: var(--color-text); transition: box-shadow 120ms ease, border-color 120ms ease, background-color 120ms ease; }
+.input::placeholder { color: var(--color-muted); }
+.input:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Card primitives */
+.card { background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); border-radius: 0.5rem; padding: 1rem; }
+.card-title { color: var(--color-text); font-weight: 700; }
+
+/* Listing card: used for project rows to ensure theme-aware backgrounds
+   Uses CSS variables so light/dark themes apply consistently. */
+.listing-card {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+}
+.listing-card:hover {
+  box-shadow: 0 6px 18px rgba(16,24,40,0.04);
+}
+/* Ensure icons and inline text inside listing rows follow theme text colors in both themes
+   - do not override explicit button variants like .btn-cta or .btn-secondary
+*/
+.listing-card .btn-icon,
+.listing-card svg {
+  color: var(--color-text);
+}
+.listing-card .text-muted {
+  color: var(--color-muted);
+}
+
+/* accessibility: ensure links remain clear */
+a { color: var(--color-primary); }
+a:hover { color: color-mix(in srgb, var(--color-primary) 85%, black 15%); }
+
+/* subtle shadows in light mode only */
+@media (prefers-color-scheme: light) {
+  .card { box-shadow: 0 6px 18px rgba(16,24,40,0.06); }
+}
+
+/* small helpers */
+.text-muted { color: var(--color-muted); }
+
+/* --- Typography utility classes (centralized text styles) --- */
+/* Use variants via the Text component to keep text tokens centralized */
+.text-body {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--color-text);
+}
+.text-small {
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: var(--color-text);
+}
+.text-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+.text-heading {
+  font-weight: 700;
+  color: var(--color-text);
+}
+.text-muted { color: var(--color-muted); }
+.text-brand { color: var(--color-primary); font-weight: 700; }
+.text-center { text-align: center; }
+.text-ellipsis { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

@@ -3,7 +3,7 @@ import React from 'react';
 const About = () => {
   return (
     <section>
-      {/* Placeholder About page */}
+      <h3>Work in Progress.</h3>
     </section>
   );
 };

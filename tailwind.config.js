@@ -5,15 +5,16 @@ module.exports = {
   ],
   theme: {
     extend: {
+      // Use CSS variables for colors so runtime theme switching works via the .dark class
       colors: {
-        primary: "#6366f1",
-        background: "#18181b",
-        surface: "#27272a",
-        border: "#3f3f46",
-        accent: "#f59e42",
-        error: "#ef4444",
-        text: "#f4f4f5",
-        muted: "#a1a1aa",
+        primary: 'var(--color-primary, #6366f1)',
+        background: 'var(--color-background, #18181b)',
+        surface: 'var(--color-surface, #27272a)',
+        border: 'var(--color-border, #3f3f46)',
+        accent: 'var(--color-accent, #ec4899)',
+        error: 'var(--color-error, #ef4444)',
+        text: 'var(--color-text, #f4f4f5)',
+        muted: 'var(--color-muted, #a1a1aa)',
       },
       spacing: {
         xs: "0.25rem",

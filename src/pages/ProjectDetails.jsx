@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { loadProject } from '../services/api';
+import Text from '../components/Text';
+import Button from '../components/Button';
 import { useNavigate, useParams } from 'react-router-dom';
 
 const ProjectDetails = () => {
@@ -22,23 +24,22 @@ const ProjectDetails = () => {
   }, [id]);
 
   if (error) {
-    return <p className="text-red-500">{error}</p>;
+    return <Text as="p" variant="small" className="text-red-500">{error}</Text>;
   }
 
   if (!project) {
-    return <p>Loading...</p>;
+    return <Text as="p" variant="body">Loading...</Text>;
   }
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">{project.name}</h1>
-      <p className="mb-4">{project.description}</p>
-      <button
-        className="px-4 py-2 bg-blue-500 text-white rounded"
-        onClick={() => navigate(`/projects/${id}/edit`)}
-      >
-        Edit Project
-      </button>
+    <div className="page-container p-6">
+      <div className="card" style={{ maxWidth: '800px', margin: '0 auto' }}>
+        <div className="card-inner">
+          <Text as="h1" variant="heading" className="text-2xl font-bold mb-4">{project.name}</Text>
+          <Text as="p" variant="small" className="mb-4 text-muted">{project.description}</Text>
+          <Button variant="primary" onClick={() => navigate(`/projects/${id}/edit`)}><Text as="span" variant="label" allowColorOverride>Edit Project</Text></Button>
+        </div>
+      </div>
     </div>
   );
 };
